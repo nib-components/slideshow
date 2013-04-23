@@ -1,0 +1,15 @@
+{
+  "name": "slideshow",
+  "scripts": [
+    "index.js"
+  ],
+  "dependencies": {
+    "component/classes": "*",
+    "component/event": "*",
+    "ecarter/css-emitter": "*",
+    "component/emitter": "*"
+  },
+  "development": {
+    "component/assert": "*"
+  }
+}
