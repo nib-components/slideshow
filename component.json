@@ -6,7 +6,7 @@
   "dependencies": {
     "component/classes": "*",
     "component/event": "*",
-    "ecarter/css-emitter": "*",
+    "anthonyshort/css-emitter": "0.1.0",
     "component/emitter": "*"
   },
   "development": {
