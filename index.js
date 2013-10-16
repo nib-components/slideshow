@@ -351,8 +351,18 @@ SlideShow.prototype.setEnabled = function(val) {
  */
 
 SlideShow.prototype.automate = function(isAutomated){
-  var self = this;
-  setInterval(function(){
-    self.next();
-  }, this.transitionSpeed);
+  console.log('automate');
+  setTimeout(this.timeout.bind(this), this.transitionSpeed);
+};
+
+/**
+ * call timeout for automated transitions
+ *
+ * @api public
+ */
+
+SlideShow.prototype.timeout = function(){
+  console.log('timeout');
+  this.next();
+  setTimeout(this.timeout.bind(this), this.transitionSpeed);
 };
