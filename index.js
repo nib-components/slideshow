@@ -26,7 +26,7 @@ module.exports = SlideShow;
 
 /**
  * Gets a template, renders it and returns the elements
- * @param  {Element} el 
+ * @param  {Element} el
  * @param  {String} name Template name identified with data-template
  * @return {Element}
  */
@@ -52,6 +52,8 @@ function SlideShow(options) {
   this._createIndicators();
   this.setIndicator(this.current);
   this.show(this.current, true);
+  this.transitionSpeed = this.options.transitionSpeed || 5000;
+  this.automate(this.options.automate || false);
 }
 
 /**
@@ -70,7 +72,7 @@ Emitter(SlideShow.prototype);
 
 /**
  * Create the next button from the template and bind events
- * 
+ *
  * @api private
  */
 
@@ -113,8 +115,8 @@ SlideShow.prototype._createIndicators = function() {
     var el = getTemplate(this.el, 'indicator');
 
     // When clicking the indicator move to the correct
-    // slide. If clicking an indicator higher than the 
-    // current one, it assumes it is moving forward and 
+    // slide. If clicking an indicator higher than the
+    // current one, it assumes it is moving forward and
     // vica-versa.
     events.bind(el, 'click', function(){
       self.show(i, i > self.current);
@@ -129,7 +131,7 @@ SlideShow.prototype._createIndicators = function() {
 
 /**
  * Destroy the slideshow
- * 
+ *
  * @api public
  */
 
@@ -140,14 +142,14 @@ SlideShow.prototype.remove = function() {
 
 /**
  * Set the current active indicator
- * 
+ *
  * @api private
  */
 
 SlideShow.prototype.setIndicator = function(index) {
   var self = this;
   each.call(this.indicators, function(el, i){
-    if( i === index ) {    
+    if( i === index ) {
       classes(el).add('is-active');
       self.emit('indicator:active', el, i);
     }
@@ -236,7 +238,7 @@ SlideShow.prototype.getPreviousIndex = function(index) {
  */
 
 SlideShow.prototype.enableTransitions = function(el) {
-  classes(el).remove('no-transitions');  
+  classes(el).remove('no-transitions');
 };
 
 /**
@@ -246,7 +248,7 @@ SlideShow.prototype.enableTransitions = function(el) {
  */
 
 SlideShow.prototype.disableTransitions = function(el) {
-  classes(el).add('no-transitions');  
+  classes(el).add('no-transitions');
 };
 
 /**
@@ -262,10 +264,10 @@ SlideShow.prototype.reposition = function(index, isForward) {
     nextSlide.setAttribute('data-state', 'next');
   }
   else if(this.isFirst(index) && !isForward) {
-    nextSlide.setAttribute('data-state', 'previous'); 
+    nextSlide.setAttribute('data-state', 'previous');
   }
   else {
-    nextSlide.setAttribute('data-state', isForward ? 'next' : 'previous');    
+    nextSlide.setAttribute('data-state', isForward ? 'next' : 'previous');
   }
 };
 
@@ -340,4 +342,42 @@ SlideShow.prototype.previous = function(){
 
 SlideShow.prototype.setEnabled = function(val) {
   this.enabled = Boolean(val);
+};
+
+/**
+ * Enable an automated scrolling slideshow
+ *
+ * @api public
+ */
+
+SlideShow.prototype.automate = function(isAutomated){
+  var self = this;
+  var count = this.current;
+
+  setInterval(function(){
+    Array.prototype.forEach.call(self.slides, function(slide){
+      slide.removeAttribute('data-state');
+    });
+
+    if (self.isLast(count)) {
+      count = 0;
+    } else {
+      count += 1;
+    }
+
+    self.on('select', function(idx){
+      count = idx;
+    });
+
+    self.on('next', function(idx){
+      count = idx;
+    });
+
+    self.on('previous', function(idx){
+      count = idx;
+    });
+
+    self.show(count, true);
+    self.setIndicator(count);
+  }, this.transitionSpeed);
 };
