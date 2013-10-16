@@ -351,7 +351,6 @@ SlideShow.prototype.setEnabled = function(val) {
  */
 
 SlideShow.prototype.automate = function(isAutomated){
-  console.log('automate');
   setTimeout(this.timeout.bind(this), this.transitionSpeed);
 };
 
@@ -362,7 +361,6 @@ SlideShow.prototype.automate = function(isAutomated){
  */
 
 SlideShow.prototype.timeout = function(){
-  console.log('timeout');
   this.next();
   setTimeout(this.timeout.bind(this), this.transitionSpeed);
 };
