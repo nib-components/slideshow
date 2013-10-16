@@ -352,32 +352,7 @@ SlideShow.prototype.setEnabled = function(val) {
 
 SlideShow.prototype.automate = function(isAutomated){
   var self = this;
-  var count = this.current;
-
   setInterval(function(){
-    Array.prototype.forEach.call(self.slides, function(slide){
-      slide.removeAttribute('data-state');
-    });
-
-    if (self.isLast(count)) {
-      count = 0;
-    } else {
-      count += 1;
-    }
-
-    self.on('select', function(idx){
-      count = idx;
-    });
-
-    self.on('next', function(idx){
-      count = idx;
-    });
-
-    self.on('previous', function(idx){
-      count = idx;
-    });
-
-    self.show(count, true);
-    self.setIndicator(count);
+    self.next();
   }, this.transitionSpeed);
 };
