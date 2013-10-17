@@ -53,6 +53,7 @@ function SlideShow(options) {
   this.setIndicator(this.current);
   this.show(this.current, true);
   this.speed = this.options.speed || 0;
+  this.pauseOnHover();
   this.play();
 }
 
@@ -384,9 +385,6 @@ SlideShow.prototype.play = function(){
 
 SlideShow.prototype.auto = function(speed){
   var self = this;
-
-  // Enable pauseOnHover
-  this.pauseOnHover();
 
   // Is it automatic?
   if(speed == null ) {
