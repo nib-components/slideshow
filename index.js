@@ -52,8 +52,8 @@ function SlideShow(options) {
   this._createIndicators();
   this.setIndicator(this.current);
   this.show(this.current, true);
-  this.transitionSpeed = this.options.transitionSpeed || 5000;
-  this.automate(this.options.automate || false);
+  this.speed = this.options.speed || 0;
+  this.play();
 }
 
 /**
@@ -345,22 +345,70 @@ SlideShow.prototype.setEnabled = function(val) {
 };
 
 /**
+ * Enable pausing the slideshow on hover
+ *
+ * @api public
+ */
+
+SlideShow.prototype.pauseOnHover = function(){
+  this.el.addEventListener('mouseover', this.pause.bind(this));
+  this.el.addEventListener('mouseout', this.play.bind(this));
+};
+
+/**
+ * On pause, set this.paused to true
+ *
+ * @api public
+ */
+
+SlideShow.prototype.pause = function(){
+  this.paused = true;
+};
+
+/**
+ * On play, set this.paused to false and call the auto method
+ *
+ * @api public
+ */
+
+SlideShow.prototype.play = function(){
+  this.paused = false;
+  this.auto(this.speed);
+};
+
+/**
  * Enable an automated scrolling slideshow
  *
  * @api public
  */
 
-SlideShow.prototype.automate = function(isAutomated){
-  setTimeout(this.timeout.bind(this), this.transitionSpeed);
-};
+SlideShow.prototype.auto = function(speed){
+  var self = this;
 
-/**
- * call timeout for automated transitions
- *
- * @api public
- */
+  // Enable pauseOnHover
+  this.pauseOnHover();
 
-SlideShow.prototype.timeout = function(){
-  this.next();
-  setTimeout(this.timeout.bind(this), this.transitionSpeed);
+  // Is it automatic?
+  if(speed == null ) {
+    return this.speed !== 0;
+  }
+
+  this.speed = speed;
+
+  // clear any previous timeouts
+  if(this._timeout) clearTimeout(this._timeout);
+
+  // This will keep firing until the speed is set to 0.
+  // If the slideshow is paused, the timeout will continue
+  // but it won't move to the next slide.
+  this._timeout = setTimeout(function tick(){
+    // No more automatic sliding
+    if(self.speed === 0) return;
+
+    // Set it so we can clear it
+    self._timeout = setTimeout(tick, self.speed);
+
+    // Next slide if not paused
+    if(self.paused === false) self.next();
+  }, this.speed);
 };
