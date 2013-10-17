@@ -26,7 +26,7 @@ module.exports = SlideShow;
 
 /**
  * Gets a template, renders it and returns the elements
- * @param  {Element} el 
+ * @param  {Element} el
  * @param  {String} name Template name identified with data-template
  * @return {Element}
  */
@@ -52,6 +52,8 @@ function SlideShow(options) {
   this._createIndicators();
   this.setIndicator(this.current);
   this.show(this.current, true);
+  this.speed = this.options.speed || 0;
+  this.play();
 }
 
 /**
@@ -70,7 +72,7 @@ Emitter(SlideShow.prototype);
 
 /**
  * Create the next button from the template and bind events
- * 
+ *
  * @api private
  */
 
@@ -113,8 +115,8 @@ SlideShow.prototype._createIndicators = function() {
     var el = getTemplate(this.el, 'indicator');
 
     // When clicking the indicator move to the correct
-    // slide. If clicking an indicator higher than the 
-    // current one, it assumes it is moving forward and 
+    // slide. If clicking an indicator higher than the
+    // current one, it assumes it is moving forward and
     // vica-versa.
     events.bind(el, 'click', function(){
       self.show(i, i > self.current);
@@ -129,7 +131,7 @@ SlideShow.prototype._createIndicators = function() {
 
 /**
  * Destroy the slideshow
- * 
+ *
  * @api public
  */
 
@@ -140,14 +142,14 @@ SlideShow.prototype.remove = function() {
 
 /**
  * Set the current active indicator
- * 
+ *
  * @api private
  */
 
 SlideShow.prototype.setIndicator = function(index) {
   var self = this;
   each.call(this.indicators, function(el, i){
-    if( i === index ) {    
+    if( i === index ) {
       classes(el).add('is-active');
       self.emit('indicator:active', el, i);
     }
@@ -236,7 +238,7 @@ SlideShow.prototype.getPreviousIndex = function(index) {
  */
 
 SlideShow.prototype.enableTransitions = function(el) {
-  classes(el).remove('no-transitions');  
+  classes(el).remove('no-transitions');
 };
 
 /**
@@ -246,7 +248,7 @@ SlideShow.prototype.enableTransitions = function(el) {
  */
 
 SlideShow.prototype.disableTransitions = function(el) {
-  classes(el).add('no-transitions');  
+  classes(el).add('no-transitions');
 };
 
 /**
@@ -262,10 +264,10 @@ SlideShow.prototype.reposition = function(index, isForward) {
     nextSlide.setAttribute('data-state', 'next');
   }
   else if(this.isFirst(index) && !isForward) {
-    nextSlide.setAttribute('data-state', 'previous'); 
+    nextSlide.setAttribute('data-state', 'previous');
   }
   else {
-    nextSlide.setAttribute('data-state', isForward ? 'next' : 'previous');    
+    nextSlide.setAttribute('data-state', isForward ? 'next' : 'previous');
   }
 };
 
@@ -340,4 +342,73 @@ SlideShow.prototype.previous = function(){
 
 SlideShow.prototype.setEnabled = function(val) {
   this.enabled = Boolean(val);
+};
+
+/**
+ * Enable pausing the slideshow on hover
+ *
+ * @api public
+ */
+
+SlideShow.prototype.pauseOnHover = function(){
+  this.el.addEventListener('mouseover', this.pause.bind(this));
+  this.el.addEventListener('mouseout', this.play.bind(this));
+};
+
+/**
+ * On pause, set this.paused to true
+ *
+ * @api public
+ */
+
+SlideShow.prototype.pause = function(){
+  this.paused = true;
+};
+
+/**
+ * On play, set this.paused to false and call the auto method
+ *
+ * @api public
+ */
+
+SlideShow.prototype.play = function(){
+  this.paused = false;
+  this.auto(this.speed);
+};
+
+/**
+ * Enable an automated scrolling slideshow
+ *
+ * @api public
+ */
+
+SlideShow.prototype.auto = function(speed){
+  var self = this;
+
+  // Enable pauseOnHover
+  this.pauseOnHover();
+
+  // Is it automatic?
+  if(speed == null ) {
+    return this.speed !== 0;
+  }
+
+  this.speed = speed;
+
+  // clear any previous timeouts
+  if(this._timeout) clearTimeout(this._timeout);
+
+  // This will keep firing until the speed is set to 0.
+  // If the slideshow is paused, the timeout will continue
+  // but it won't move to the next slide.
+  this._timeout = setTimeout(function tick(){
+    // No more automatic sliding
+    if(self.speed === 0) return;
+
+    // Set it so we can clear it
+    self._timeout = setTimeout(tick, self.speed);
+
+    // Next slide if not paused
+    if(self.paused === false) self.next();
+  }, this.speed);
 };
