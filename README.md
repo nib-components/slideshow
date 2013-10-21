@@ -31,7 +31,7 @@ var slideshow = new Slideshow({
   slideSelector: .js-slide-item,   // optional: define a classname for a slide. Defaults to .js-slide
   startAt: 2,   // optional: define the starting slide, Defaults to 0
   buttons: false, // optional: display next/previous buttons, Defaults to true
- 	indicators: false // optional: display paging indicators, Defaults to true
+  indicators: false // optional: display paging indicators, Defaults to true
  });
 ```
 
