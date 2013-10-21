@@ -47,11 +47,9 @@ function SlideShow(options) {
   this.slides = this.el.querySelectorAll(this.options.slideSelector || '.js-slide');
   this.current = this.options.startAt || 0;
   this.enabled = true;
-  this._createNextButton();
-  this._createPreviousButton();
-  this._createIndicators();
-  this.setIndicator(this.current);
   this.show(this.current, true);
+  this.indicators = this.options.indicators;
+  this.buttons = this.options.buttons;
   this.speed = this.options.speed || 0;
   this.pauseOnHover();
   this.play();
@@ -70,6 +68,23 @@ SlideShow.create = function(options){
  */
 
 Emitter(SlideShow.prototype);
+
+/**
+ * Based on options, choose to display buttons and indicators
+ *
+ * @api public
+ */
+
+SlideShow.prototype.renderUI = function(){
+  if (this.buttons !== false){
+    this._createNextButton();
+    this._createPreviousButton();
+  }
+  if (this.indicators !== false){
+    this._createIndicators();
+    this.setIndicator(this.current);
+  }
+};
 
 /**
  * Create the next button from the template and bind events
@@ -352,8 +367,13 @@ SlideShow.prototype.setEnabled = function(val) {
  */
 
 SlideShow.prototype.pauseOnHover = function(){
-  this.el.addEventListener('mouseover', this.pause.bind(this));
-  this.el.addEventListener('mouseout', this.play.bind(this));
+  if (!this.el.addEventListener){
+    this.el.attachEvent('mouseover', this.pause.bind(this));
+    this.el.attachEvent('mouseout', this.play.bind(this));
+  } else {
+    this.el.addEventListener('mouseover', this.pause.bind(this));
+    this.el.addEventListener('mouseout', this.play.bind(this));
+  }
 };
 
 /**
