@@ -367,8 +367,13 @@ SlideShow.prototype.setEnabled = function(val) {
  */
 
 SlideShow.prototype.pauseOnHover = function(){
-  this.el.addEventListener('mouseover', this.pause.bind(this));
-  this.el.addEventListener('mouseout', this.play.bind(this));
+  if (!this.el.addEventListener){
+    this.el.attachEvent('mouseover', this.pause.bind(this));
+    this.el.attachEvent('mouseout', this.play.bind(this));
+  } else {
+    this.el.addEventListener('mouseover', this.pause.bind(this));
+    this.el.addEventListener('mouseout', this.play.bind(this));
+  }
 };
 
 /**
