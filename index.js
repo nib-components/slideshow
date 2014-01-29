@@ -30,10 +30,18 @@ module.exports = SlideShow;
  * @param  {String} name Template name identified with data-template
  * @return {Element}
  */
-function getTemplate(el, name) {
+function getTemplate(el, name, text) {
   var template = el.querySelector('[data-template="'+name+'"]').innerHTML.trim();
   var tmp = document.createElement('div');
   tmp.innerHTML = template;
+
+  // set the indicator value
+  if (text){
+    var child = document.createElement('span');
+    child.innerText = text;
+    tmp.firstChild.appendChild(child);
+  }
+
   return tmp.firstChild;
 }
 
@@ -47,9 +55,11 @@ function SlideShow(options) {
   this.slides = this.el.querySelectorAll(this.options.slideSelector || '.js-slide');
   this.current = this.options.startAt || 0;
   this.enabled = true;
+  this._createNextButton();
+  this._createPreviousButton();
+  this._createIndicators();
+  this.setIndicator(this.current);
   this.show(this.current, true);
-  this.indicators = this.options.indicators;
-  this.buttons = this.options.buttons;
   this.speed = this.options.speed || 0;
   this.pauseOnHover();
   this.play();
@@ -68,23 +78,6 @@ SlideShow.create = function(options){
  */
 
 Emitter(SlideShow.prototype);
-
-/**
- * Based on options, choose to display buttons and indicators
- *
- * @api public
- */
-
-SlideShow.prototype.renderUI = function(){
-  if (this.buttons !== false){
-    this._createNextButton();
-    this._createPreviousButton();
-  }
-  if (this.indicators !== false){
-    this._createIndicators();
-    this.setIndicator(this.current);
-  }
-};
 
 /**
  * Create the next button from the template and bind events
@@ -125,10 +118,18 @@ SlideShow.prototype._createPreviousButton = function() {
 SlideShow.prototype._createIndicators = function() {
   var self = this;
   var list = this.el.querySelector('.js-indicators');
+  var text;
   this.indicators = [];
 
   this.each(function(slide, i){
-    var el = getTemplate(this.el, 'indicator');
+    text = null;
+
+    // check for indicator value
+    if (slide.getAttribute('data-indicator-value')){
+      text = slide.getAttribute('data-indicator-value');
+    }
+
+    var el = getTemplate(this.el, 'indicator', text);
 
     // When clicking the indicator move to the correct
     // slide. If clicking an indicator higher than the
@@ -367,13 +368,8 @@ SlideShow.prototype.setEnabled = function(val) {
  */
 
 SlideShow.prototype.pauseOnHover = function(){
-  if (!this.el.addEventListener){
-    this.el.attachEvent('mouseover', this.pause.bind(this));
-    this.el.attachEvent('mouseout', this.play.bind(this));
-  } else {
-    this.el.addEventListener('mouseover', this.pause.bind(this));
-    this.el.addEventListener('mouseout', this.play.bind(this));
-  }
+  this.el.addEventListener('mouseover', this.pause.bind(this));
+  this.el.addEventListener('mouseout', this.play.bind(this));
 };
 
 /**
