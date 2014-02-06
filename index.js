@@ -38,7 +38,7 @@ function getTemplate(el, name, text) {
   // set the indicator value
   if (text){
     var child = document.createElement('span');
-    child.innerText = text;
+    child.innerHTML = text;
     tmp.firstChild.appendChild(child);
   }
 
