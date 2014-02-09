@@ -71,25 +71,20 @@ function SlideShow(options) {
     switch (event.type) {
 
     case 'swipeleft':
-      console.log('swipeleft next');
       this.next();
       event.gesture.stopDetect();
       break;
 
     case 'swiperight':
-      console.log('swiperight previous');
       this.previous();
       event.gesture.stopDetect();
       break;
 
     case 'release':
       if(event.gesture.velocityX != 0) {
-        console.log(event);
         if (event.gesture.direction == 'right') {
-          console.log('release', event.gesture.direction);
           this.previous();
         } else {
-          console.log('release', event.gesture.direction);
           this.next();
         }
       }
