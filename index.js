@@ -2,6 +2,7 @@ var classes = require('classes');
 var events = require('event');
 var transition = require('css-emitter');
 var Emitter = require('emitter');
+var Hammer = require('hammerjs');
 var each = [].forEach;
 
 // Test for transition support
@@ -61,6 +62,43 @@ function SlideShow(options) {
   this.setIndicator(this.current);
   this.show(this.current, true);
   this.speed = this.options.speed || 0;
+
+  //bind touch events
+  //TODO: It'd be nice to show the slides being dragged whilst the user is dragging their finger just like at http://eightmedia.github.io/hammer.js/examples/carousel.html.
+  //      I'm pretty sure this will require styling changes to the slider.
+  Hammer(this.el).on('release swipeleft dragleft swiperight dragright', function(event) {
+
+    switch (event.type) {
+
+    case 'swipeleft':
+      console.log('swipeleft next');
+      this.next();
+      event.gesture.stopDetect();
+      break;
+
+    case 'swiperight':
+      console.log('swiperight previous');
+      this.previous();
+      event.gesture.stopDetect();
+      break;
+
+    case 'release':
+      if(event.gesture.velocityX != 0) {
+        console.log(event);
+        if (event.gesture.direction == 'right') {
+          console.log('release', event.gesture.direction);
+          this.previous();
+        } else {
+          console.log('release', event.gesture.direction);
+          this.next();
+        }
+      }
+      break;
+
+    }
+
+  }.bind(this));
+
   this.pauseOnHover();
   this.play();
 }
