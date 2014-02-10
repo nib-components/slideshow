@@ -401,8 +401,8 @@ SlideShow.prototype.setEnabled = function(val) {
  */
 
 SlideShow.prototype.pauseOnHover = function(){
-  this.el.addEventListener('mouseover', this.pause.bind(this));
-  this.el.addEventListener('mouseout', this.play.bind(this));
+  events.bind(this.el, 'mouseover', this.pause.bind(this));
+  events.bind(this.el, 'mouseout', this.play.bind(this));
 };
 
 /**
