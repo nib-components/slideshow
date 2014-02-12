@@ -8,9 +8,11 @@
     "component/classes": "*",
     "component/event": "*",
     "anthonyshort/css-emitter": "0.1.0",
-    "component/emitter": "*"
+    "component/emitter": "*",
+    "EightMedia/hammer.js": "v1.0.5"
   },
   "development": {
-    "component/assert": "*"
+    "component/assert": "*",
+    "nib-styles/slideshow": "*"
   }
 }

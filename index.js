@@ -2,6 +2,7 @@ var classes = require('classes');
 var events = require('event');
 var transition = require('css-emitter');
 var Emitter = require('emitter');
+var Hammer = require('hammerjs');
 var each = [].forEach;
 
 // Test for transition support
@@ -61,6 +62,43 @@ function SlideShow(options) {
   this.setIndicator(this.current);
   this.show(this.current, true);
   this.speed = this.options.speed || 0;
+
+  //bind touch events
+  var h;
+  var ho = { prevent_mouseevents: true };
+  if ($) {
+    h = $(this.el).hammer(ho);
+  } else {
+    h = Hammer(this.el, ho);
+  }
+  h.on('release swipeleft dragleft swiperight dragright', function(event) {
+
+    switch (event.type) {
+
+    case 'swipeleft':
+      this.next();
+      event.gesture.stopDetect();
+      break;
+
+    case 'swiperight':
+      this.previous();
+      event.gesture.stopDetect();
+      break;
+
+    case 'release':
+      if(event.gesture.velocityX != 0) {
+        if (event.gesture.direction == 'right') {
+          this.previous();
+        } else {
+          this.next();
+        }
+      }
+      break;
+
+    }
+
+  }.bind(this));
+
   this.pauseOnHover();
   this.play();
 }
@@ -368,8 +406,8 @@ SlideShow.prototype.setEnabled = function(val) {
  */
 
 SlideShow.prototype.pauseOnHover = function(){
-  this.el.addEventListener('mouseover', this.pause.bind(this));
-  this.el.addEventListener('mouseout', this.play.bind(this));
+  events.bind(this.el, 'mouseover', this.pause.bind(this));
+  events.bind(this.el, 'mouseout', this.play.bind(this));
 };
 
 /**

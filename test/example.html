@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Slideshow example</title>
+    <link href="../build/build.css" rel="stylesheet" type="text/css"/>
+    <style>
+
+        .slideshow {
+            height: 300px;
+            width: 800px;
+            margin: auto;
+        }
+
+        .slideshow__slide {
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Slideshow example</h1>
+    <h4>Notes:</h4>
+    <p>Run `component install --dev and component build --dev`.</p>
+
+    <div class="slideshow js-slideshow">
+
+        <div class="slideshow__slides">
+
+            <div class="slideshow__slide js-slide" data-state="current">
+                <img src="http://lorempixel.com/800/300/cats/1">
+            </div>
+
+            <div class="slideshow__slide js-slide">
+                <img src="http://lorempixel.com/800/300/cats/2">
+            </div>
+
+            <div class="slideshow__slide js-slide">
+                <img src="http://lorempixel.com/800/300/cats/3">
+            </div>
+
+            <div class="slideshow__slide js-slide">
+                <img src="http://lorempixel.com/800/300/cats/4">
+            </div>
+
+            <div class="slideshow__slide js-slide">
+                <img src="http://lorempixel.com/800/300/cats/5">
+            </div>
+
+            <div class="slideshow__slide js-slide">
+                <img src="http://lorempixel.com/800/300/cats/6">
+            </div>
+
+        </div>
+
+        <div class="slideshow__indicators js-indicators">
+            <script type="text/template" data-template="indicator">
+                <span class="slideshow__indicator"></span>
+            </script>
+        </div>
+
+        <script type="text/template" data-template="next">
+            <span class="slideshow__next"></span>
+        </script>
+
+        <script type="text/template" data-template="previous">
+            <span class="slideshow__previous"></span>
+        </script>
+
+    </div>
+
+    <script src="../build/build.js"></script>
+    <script>
+        var SlideShow = require('slideshow');
+        new SlideShow({ el: document.querySelector('.js-slideshow') });
+    </script>
+
+</body>
+</html>
