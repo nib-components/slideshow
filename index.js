@@ -64,13 +64,12 @@ function SlideShow(options) {
   this.speed = this.options.speed || 0;
 
   //bind touch events
-  //TODO: It'd be nice to show the slides being dragged whilst the user is dragging their finger just like at http://eightmedia.github.io/hammer.js/examples/carousel.html.
-  //      I'm pretty sure this will require styling changes to the slider.
   var h;
+  var ho = { prevent_mouseevents: true };
   if ($) {
-    h = $(this.el).hammer();
+    h = $(this.el).hammer(ho);
   } else {
-    h = Hammer(this.el);
+    h = Hammer(this.el, ho);
   }
   h.on('release swipeleft dragleft swiperight dragright', function(event) {
 
