@@ -52,13 +52,7 @@ function SlideShow(options) {
   //bind touch events
   //TODO: It'd be nice to show the slides being dragged whilst the user is dragging their finger just like at http://eightmedia.github.io/hammer.js/examples/carousel.html.
   //      I'm pretty sure this will require styling changes to the slider.
-  var hammerElement;
-  if (typeof $ !== 'undefined') {
-    hammerElement = $(this.element).hammer();
-  } else {
-    hammerElement = hammer(this.element);
-  }
-  hammerElement.on('release swipeleft dragleft swiperight dragright', function(event) {
+  hammer(this.element).on('release swipeleft dragleft swiperight dragright', function(event) {
 
     switch (event.type) {
 
@@ -94,6 +88,14 @@ function SlideShow(options) {
   this.play();
 }
 emitter(SlideShow.prototype);
+
+/**
+ * Alternative constructor
+ * @param   {object}  options
+ */
+SlideShow.create = function(options){
+  return new SlideShow(options);
+};
 
 /**
  * Creates the next button from the template and binds events
@@ -193,6 +195,26 @@ SlideShow.prototype.isEnabled = function() {
 
 SlideShow.prototype.setEnabled = function(enabled) {
   this.enabled = Boolean(enabled);
+};
+
+/**
+ * Gets the indicator element
+ * @api       public
+ * @param     {number}    index
+ * @return    {HTMLElement}
+ */
+SlideShow.prototype.getIndicator = function(index) {
+  return this.indicatorElements[index];
+};
+
+/**
+ * Gets the slide element
+ * @api       public
+ * @param     {number}    index
+ * @return    {HTMLElement}
+ */
+SlideShow.prototype.getSlide = function(index) {
+  return this.slideElements[index];
 };
 
 /**
@@ -357,7 +379,6 @@ SlideShow.prototype.previous = function() {
  * Pauses the slideshow
  * @api   public
  */
-
 SlideShow.prototype.pause = function(){
   this.paused = true;
 };
@@ -366,7 +387,6 @@ SlideShow.prototype.pause = function(){
  * Plays the slideshow
  * @api   public
  */
-
 SlideShow.prototype.play = function(){
   this.paused = false;
   this.auto(this.speed);
@@ -377,7 +397,6 @@ SlideShow.prototype.play = function(){
  * @api     public
  * @param   {number}  speed
  */
-
 SlideShow.prototype.auto = function(speed){
   this.speed = speed;
 
@@ -407,6 +426,17 @@ SlideShow.prototype.auto = function(speed){
 
   }.bind(this), self.speed);
 
+};
+
+/**
+ * Iterates over the slides
+ * @api     public
+ * @param   {function}  callback
+ */
+SlideShow.prototype.each = function(callback){
+  for (var i=0; i<this.slideElements.length; ++i) {
+    callback.call(this, this.slideElements[i], i)
+  }
 };
 
 /**

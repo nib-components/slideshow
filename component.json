@@ -9,11 +9,11 @@
     "component/event": "*",
     "anthonyshort/css-emitter": "0.1.0",
     "component/emitter": "*",
-    "EightMedia/hammer.js": "v1.0.5"
+    "EightMedia/hammer.js": "1.0.6"
   },
   "development": {
     "component/assert": "*",
-    "nib-styles/slideshow": "ie8rewrite",
-    "nib-components/shims": "*"
+    "nib-components/shims": "*",
+    "nib-styles/slideshow": "ie8rewrite"
   }
 }
