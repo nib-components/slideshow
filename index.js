@@ -1,29 +1,8 @@
-var classes = require('classes');
 var events = require('event');
+var emitter = require('emitter');
+var hammer = require('hammerjs');
 var transition = require('css-emitter');
-var Emitter = require('emitter');
-var Hammer = require('hammerjs');
-var each = [].forEach;
-
-// Test for transition support
-var supportsTransitions = (function() {
-  var s = document.createElement('p').style, // 's' for style. better to create an element if body yet to exist
-      v = ['ms','O','Moz','Webkit']; // 'v' for vendor
-
-  if( s.transition === '' ) return true; // check first for prefeixed-free support
-
-  while( v.length ) // now go over the list of vendor prefixes and check support until one is found
-    if( v.pop() + 'Transition' in s )
-        return true;
-
-  return false;
-})();
-
-/**
- * Export
- */
-
-module.exports = SlideShow;
+var isTransitionSupported = require('./lib/transitions-supported');
 
 /**
  * Gets a template, renders it and returns the elements
@@ -32,6 +11,7 @@ module.exports = SlideShow;
  * @return {Element}
  */
 function getTemplate(el, name, text) {
+  console.log(el, name);
   var template = el.querySelector('[data-template="'+name+'"]').innerHTML.trim();
   var tmp = document.createElement('div');
   tmp.innerHTML = template;
@@ -47,32 +27,39 @@ function getTemplate(el, name, text) {
 }
 
 /**
- * Create a slideshow
+ * Slideshow
  * @param {Object} options
+ * @constructor
  */
 function SlideShow(options) {
-  this.options = options || {};
-  this.el = this.options.el;
-  this.slides = this.el.querySelectorAll(this.options.slideSelector || '.js-slide');
-  this.current = this.options.startAt || 0;
-  this.enabled = true;
+  this.options        = options || {};
+  this.currentIndex   = this.options.startAt || 0;
+  this.element        = this.options.el;
+  this.slideElements  = this.element.querySelectorAll(this.options.slideSelector || '.js-slide');
+
+  this.speed          = this.options.speed || 0;
+  this.enabled        = this.options.enabled || true;
+  this.useTransitions = this.options.useTransitions || isTransitionSupported;
+
+  //create the navigation elements
   this._createNextButton();
   this._createPreviousButton();
   this._createIndicators();
-  this.setIndicator(this.current);
-  this.show(this.current, true);
-  this.speed = this.options.speed || 0;
+
+  //bind mouse events
+  events.bind(this.element, 'mouseover', this.pause.bind(this));
+  events.bind(this.element, 'mouseout', this.play.bind(this));
 
   //bind touch events
   //TODO: It'd be nice to show the slides being dragged whilst the user is dragging their finger just like at http://eightmedia.github.io/hammer.js/examples/carousel.html.
   //      I'm pretty sure this will require styling changes to the slider.
-  var h;
-  if ($) {
-    h = $(this.el).hammer();
+  var hammerElement;
+  if (typeof $ !== 'undefined') {
+    hammerElement = $(this.element).hammer();
   } else {
-    h = Hammer(this.el);
+    hammerElement = hammer(this.element);
   }
-  h.on('release swipeleft dragleft swiperight dragright', function(event) {
+  hammerElement.on('release swipeleft dragleft swiperight dragright', function(event) {
 
     switch (event.type) {
 
@@ -100,321 +87,276 @@ function SlideShow(options) {
 
   }.bind(this));
 
-  this.pauseOnHover();
+  //update the current index
+  this._selectIndicator(this.currentIndex);
+  this.show(this.currentIndex);
+
+  //start the slideshow playing
   this.play();
 }
+emitter(SlideShow.prototype);
 
 /**
- * Alternative constructor
- */
-
-SlideShow.create = function(options){
-  return new SlideShow(options);
-};
-
-/**
- * Mixin an emitter
- */
-
-Emitter(SlideShow.prototype);
-
-/**
- * Create the next button from the template and bind events
- *
+ * Creates the next button from the template and binds events
  * @api private
  */
-
 SlideShow.prototype._createNextButton = function() {
-  var el = getTemplate(this.el, 'next');
-  events.bind(el, 'click', this.next.bind(this));
-  this.el.appendChild(el);
-  this.nextEl = el;
-  this.emit('nextButton', el);
+  this.nextElement = getTemplate(this.element, 'next');
+  this.element.appendChild(this.nextElement);
+  events.bind(this.nextElement, 'click', this.next.bind(this));
+  this.emit('nextButton', this.nextElement);
 };
 
 /**
- * Create the previous button from the template and bind events
- *
+ * Creates the previous button from the template and binds events
  * @api private
  */
 
 SlideShow.prototype._createPreviousButton = function() {
-  var el = getTemplate(this.el, 'previous');
-  events.bind(el, 'click', this.previous.bind(this));
-  this.el.appendChild(el);
-  this.previousEl = el;
-  this.emit('previousButton', el);
+  this.previousElement = getTemplate(this.element, 'previous');
+  this.element.appendChild(this.previousElement);
+  events.bind(this.previousElement, 'click', this.previous.bind(this));
+  this.emit('previousButton', this.previousElement);
 };
 
 /**
- * Create the indicators from the template. Fires events
- * when hovering over the indicator to allow for creating
- * tooltips on the indicators.
- *
+ * Creates the indicators from the template and binds events
  * @api private
  */
-
 SlideShow.prototype._createIndicators = function() {
+  this.indicatorElements = [];
+
+  //get the indicators container
   var self = this;
-  var list = this.el.querySelector('.js-indicators');
-  var text;
-  this.indicators = [];
+  var container = this.element.querySelector('.js-indicators');
 
-  this.each(function(slide, i){
-    text = null;
+  //create an indicator for each slide
+  for (var i=0; i<this.slideElements.length; ++i) {
 
-    // check for indicator value
+    //get the slide element
+    var slide = this.slideElements[i];
+
+    //get the indicator text
+    var text = '';
     if (slide.getAttribute('data-indicator-value')){
       text = slide.getAttribute('data-indicator-value');
     }
 
-    var el = getTemplate(this.el, 'indicator', text);
+    //get the indicator template
+    var indicator = getTemplate(this.element, 'indicator', text);
 
-    // When clicking the indicator move to the correct
-    // slide. If clicking an indicator higher than the
-    // current one, it assumes it is moving forward and
-    // vica-versa.
-    events.bind(el, 'click', function(){
-      self.show(i, i > self.current);
-      self.emit('select', i);
-    });
+    //bind events to the indicator element
+    events.bind(indicator, 'click', function(j) {
+      return function() {
+        self.show(j);
+        self.emit('select', j);
+      }
+    }(i));
 
-    // Add it to the list of indicators
-    list.appendChild(el);
-    this.indicators.push(el);
-  });
+    //add the indicator
+    container.appendChild(indicator);
+    this.indicatorElements.push(indicator);
+
+  }
+
 };
 
 /**
- * Destroy the slideshow
- *
- * @api public
- */
-
-SlideShow.prototype.remove = function() {
-  this.el.parentNode.removeChild(this.el);
-  this.emit('remove');
-};
-
-/**
- * Set the current active indicator
- *
+ * Selects the indicator
  * @api private
+ * @param   {number}  index
  */
-
-SlideShow.prototype.setIndicator = function(index) {
-  var self = this;
-  each.call(this.indicators, function(el, i){
-    if( i === index ) {
-      classes(el).add('is-active');
-      self.emit('indicator:active', el, i);
+SlideShow.prototype._selectIndicator = function(index) {
+  for (var i=0; i<this.slideElements.length; ++i) {
+    if (i === index) {
+      this.indicatorElements[index].classList.add('current');
+      this.emit('indicator:active', this.indicatorElements[index], i);
+    } else {
+      this.indicatorElements[i].classList.remove('current');
     }
-    else {
-      classes(el).remove('is-active');
+  }
+};
+
+/**
+ * Gets whether the slideshow is enabled
+ * @api       public
+ * @returns   {boolean}
+ */
+SlideShow.prototype.isEnabled = function() {
+  return this.enabled;
+};
+
+/**
+ * Enable or disable the ability to move between slides
+ * @api       public
+ * @param     {boolean}   enabled
+ */
+
+SlideShow.prototype.setEnabled = function(enabled) {
+  this.enabled = Boolean(enabled);
+};
+
+/**
+ * Shows the specified slide
+ * @api     public
+ * @param   {number}  index
+ * @param   {boolean} isMovingForward
+ */
+SlideShow.prototype.show = function(index, isMovingForward) {
+  isMovingForward = typeof isMovingForward === 'undefined' ? index>this.currentIndex : isMovingForward;
+
+  //check if the slideshow is disabled
+  if (this.enabled !== true) {
+    return;
+  }
+
+  //check if the specified slide is already the current slide
+  if (index === this.currentIndex) {
+    return;
+  }
+
+  //Get the slides.
+  var currentSlide  = this.slideElements[this.currentIndex];
+  var nextSlide     = this.slideElements[index];
+
+  //Stop the user from spamming the slides.
+  this.setEnabled(false);
+
+  //Select the indicator for the next slide.
+  this._selectIndicator(index);
+
+  if (this.useTransitions) {
+
+    //Position the next slide ready for the transition. Make sure transitions are disabled so the slide is moved immediately.
+    nextSlide.classList.add('no-transitions');
+    if (isMovingForward) {
+      nextSlide.classList.add('next');
+    } else {
+      nextSlide.classList.add('previous');
     }
-  });
+
+    //Wait for the browser to render the position changes to the next slide.
+    setTimeout(function() {
+
+      //Start the current slide moving off the screen.
+      if (isMovingForward) {
+        currentSlide.classList.add('previous');
+      } else {
+        currentSlide.classList.add('next');
+      }
+      currentSlide.classList.remove('current');
+
+      //Re-enable transitions and start the next slide moving onto the screen.
+      nextSlide.classList.add('current');
+      nextSlide.classList.remove('next');
+      nextSlide.classList.remove('previous');
+      nextSlide.classList.remove('no-transitions');
+
+    }.bind(this), 10);
+
+    //Remove the next/previous classes when the transition has finished.
+    transition(currentSlide).once(function(){
+
+      //Reset the current slide position.
+      currentSlide.classList.remove('next');
+      currentSlide.classList.remove('previous');
+      //disable transitions cause they're not needed?
+
+      //Set the current slide index.
+      this.currentIndex = index;
+
+      //Allow the user to spam buttons.
+      this.setEnabled(true);
+
+      //Trigger the show event.
+      this.emit('show', this.currentIndex);
+
+    }.bind(this));
+
+  } else {
+
+    //Change the slide which is displayed.
+    nextSlide.classList.add('current');
+    currentSlide.classList.remove('current');
+
+    //Set the current slide index.
+    this.currentIndex = index;
+
+    //Allow the user to spam buttons.
+    this.setEnabled(true);
+
+    //Trigger the show event.
+    this.emit('show', this.currentIndex);
+
+  }
+
 };
 
 /**
- * Show a slide by its index. Also pass through a boolean
- * for whether to move the slideshow forward or backward
- * to reach the slide.
- *
- * @api public
+ * Gets whether the specified slide is the first slide
+ * @api     public
+ * @param   {number}  index
+ * @returns {boolean}
  */
-
-SlideShow.prototype.show = function(index, isForward) {
-  if(this.enabled === false || this.current === index) return;
-  this.setIndicator(index);
-  this.setSlide(index, isForward);
-  this.current = index;
-  this.emit('show', index, isForward);
-};
-
-/**
- * Loop through each slide and fire a callback
- *
- * @api public
- */
-
-SlideShow.prototype.each = function(fn) {
-  each.call(this.slides, fn, this);
-};
-
-/**
- * Pass an index and return a boolean determining
- * if it is the index of the last slide
- *
- * @api public
- */
-
-SlideShow.prototype.isLast = function(index) {
-  return index === this.slides.length - 1;
-};
-
-/**
- * Pass an index and return a boolean determining
- * if it is the index of the first slide
- *
- * @api public
- */
-
 SlideShow.prototype.isFirst = function(index) {
   return index === 0;
 };
 
 /**
- * Give it an index and get the index of the next slide
- *
- * @api public
+ * Gets whether the specified slide is the last slide
+ * @api     public
+ * @param   {number}  index
+ * @returns {boolean}
  */
+SlideShow.prototype.isLast = function(index) {
+  return index === this.slideElements.length - 1;
+};
 
+/**
+ * Gets the next index for the specified index
+ * @api     public
+ * @param   {number} index
+ * @returns {number}
+ */
 SlideShow.prototype.getNextIndex = function(index) {
   var next = index + 1;
-  if(next > (this.slides.length - 1)) next = 0;
+  if(next > (this.slideElements.length - 1)) next = 0;
   return next;
 };
 
 /**
- * Give it an index and get the index of the previous slide
- *
- * @api public
+ * Gets the previous index for the specified index
+ * @api     public
+ * @param   {number} index The
+ * @returns {number}
  */
-
 SlideShow.prototype.getPreviousIndex = function(index) {
   var previous = index - 1;
-  if(previous === -1) previous = (this.slides.length - 1);
+  if(previous === -1) previous = (this.slideElements.length - 1);
   return previous;
 };
 
 /**
- * Enable or disable transitions on a slide
- *
- * @api private
+ * Moves to the next slide
+ * @api   public
  */
-
-SlideShow.prototype.enableTransitions = function(el) {
-  classes(el).remove('no-transitions');
-};
-
-/**
- * Enable or disable transitions on a slide
- *
- * @api private
- */
-
-SlideShow.prototype.disableTransitions = function(el) {
-  classes(el).add('no-transitions');
-};
-
-/**
- * Reposition a slide for its next animation
- *
- * @api private
- */
-
-SlideShow.prototype.reposition = function(index, isForward) {
-  var nextSlide = this.slides[index];
-
-  if(this.isLast(index) && isForward) {
-    nextSlide.setAttribute('data-state', 'next');
-  }
-  else if(this.isFirst(index) && !isForward) {
-    nextSlide.setAttribute('data-state', 'previous');
-  }
-  else {
-    nextSlide.setAttribute('data-state', isForward ? 'next' : 'previous');
-  }
-};
-
-/**
- * Show a slide by it's index and a boolean for whether
- * to show it moving forward or backwards
- *
- * @api private
- */
-
-SlideShow.prototype.setSlide = function(show, isForward) {
-  var self = this;
-  var nextSlide = this.slides[show];
-  var currentSlide = this.slides[this.current];
-
-  // Enable when the animations are finished
-  if(supportsTransitions) {
-
-    // Stops the user from spamming the buttons
-    this.setEnabled(false);
-
-    transition(currentSlide).once(function(){
-      self.setEnabled(true);
-      currentSlide.removeAttribute('data-state');
-      self.emit('show', show);
-    });
-  }
-
-  self.disableTransitions(nextSlide);
-
-  // Re-position the next slide in the correct position depending
-  // if we're going forward or backwards. This allows for looping.
-  self.reposition(show, isForward);
-
-  setTimeout(function(){
-    currentSlide.setAttribute('data-state', isForward ? 'previous' : 'next');
-    self.enableTransitions(nextSlide);
-  }, 100);
-  setTimeout(function(){
-    nextSlide.setAttribute('data-state', 'current');
-  }, 100);
-
-};
-
-/**
- * Move to the next slide
- *
- * @api public
- */
-
-SlideShow.prototype.next = function(){
-  this.show(this.getNextIndex(this.current), true);
+SlideShow.prototype.next = function() {
+  this.show(this.getNextIndex(this.currentIndex), true);
   this.emit('next');
 };
 
 /**
- * Move to the previous slide
- *
- * @api public
+ * Moves to the previous slide
+ * @api   public
  */
-
-SlideShow.prototype.previous = function(){
-  this.show(this.getPreviousIndex(this.current), false);
+SlideShow.prototype.previous = function() {
+  this.show(this.getPreviousIndex(this.currentIndex), false);
   this.emit('previous');
 };
 
 /**
- * Enable or disable the ability to move between slides
- *
- * @api public
- */
-
-SlideShow.prototype.setEnabled = function(val) {
-  this.enabled = Boolean(val);
-};
-
-/**
- * Enable pausing the slideshow on hover
- *
- * @api public
- */
-
-SlideShow.prototype.pauseOnHover = function(){
-  events.bind(this.el, 'mouseover', this.pause.bind(this));
-  events.bind(this.el, 'mouseout', this.play.bind(this));
-};
-
-/**
- * On pause, set this.paused to true
- *
- * @api public
+ * Pauses the slideshow
+ * @api   public
  */
 
 SlideShow.prototype.pause = function(){
@@ -422,9 +364,8 @@ SlideShow.prototype.pause = function(){
 };
 
 /**
- * On play, set this.paused to false and call the auto method
- *
- * @api public
+ * Plays the slideshow
+ * @api   public
  */
 
 SlideShow.prototype.play = function(){
@@ -433,35 +374,49 @@ SlideShow.prototype.play = function(){
 };
 
 /**
- * Enable an automated scrolling slideshow
- *
- * @api public
+ * Enables automatic sliding
+ * @api     public
+ * @param   {number}  speed
  */
 
 SlideShow.prototype.auto = function(speed){
-  var self = this;
-
-  // Is it automatic?
-  if(speed == null ) {
-    return this.speed !== 0;
-  }
-
   this.speed = speed;
 
-  // clear any previous timeouts
-  if(this._timeout) clearTimeout(this._timeout);
+  //Clear previous timeouts so we can update the speed.
+  if(this.timeout) {
+    clearTimeout(this.timeout);
+  }
 
   // This will keep firing until the speed is set to 0.
   // If the slideshow is paused, the timeout will continue
   // but it won't move to the next slide.
-  this._timeout = setTimeout(function tick(){
-    // No more automatic sliding
-    if(self.speed === 0) return;
+  var self = this;
+  this.timeout = setTimeout(function tick(){
+
+    //Stop auto scrolling.
+    if(self.speed === 0) {
+      return;
+    }
 
     // Set it so we can clear it
-    self._timeout = setTimeout(tick, self.speed);
+    self.timeout = setTimeout(tick, self.speed);
 
-    // Next slide if not paused
-    if(self.paused === false) self.next();
-  }, this.speed);
+    //Move to the next slide if not paused.
+    if(self.paused === false) {
+      self.next();
+    }
+
+  }.bind(this), self.speed);
+
 };
+
+/**
+ * Destroy the slideshow
+ * @api public
+ */
+SlideShow.prototype.remove = function() {
+  this.element.parentNode.removeChild(this.element);
+  this.emit('remove');
+};
+
+module.exports = SlideShow;

@@ -11,10 +11,6 @@
             margin: auto;
         }
 
-        .slideshow__slide {
-            text-align: center;
-        }
-
     </style>
 </head>
 <body>
@@ -27,27 +23,27 @@
 
         <div class="slideshow__slides">
 
-            <div class="slideshow__slide js-slide" data-state="current">
+            <div class="slideshow__slide slideshow__slide--0 js-slide current">
                 <img src="http://lorempixel.com/800/300/cats/1">
             </div>
 
-            <div class="slideshow__slide js-slide">
+            <div class="slideshow__slide slideshow__slide--1 js-slide">
                 <img src="http://lorempixel.com/800/300/cats/2">
             </div>
 
-            <div class="slideshow__slide js-slide">
+            <div class="slideshow__slide slideshow__slide--2 js-slide">
                 <img src="http://lorempixel.com/800/300/cats/3">
             </div>
 
-            <div class="slideshow__slide js-slide">
+            <div class="slideshow__slide slideshow__slide--3 js-slide">
                 <img src="http://lorempixel.com/800/300/cats/4">
             </div>
 
-            <div class="slideshow__slide js-slide">
+            <div class="slideshow__slide slideshow__slide--4 js-slide">
                 <img src="http://lorempixel.com/800/300/cats/5">
             </div>
 
-            <div class="slideshow__slide js-slide">
+            <div class="slideshow__slide slideshow__slide--5 js-slide">
                 <img src="http://lorempixel.com/800/300/cats/6">
             </div>
 
@@ -71,6 +67,7 @@
 
     <script src="../build/build.js"></script>
     <script>
+        require('shims'); //IE8
         var SlideShow = require('slideshow');
         new SlideShow({ el: document.querySelector('.js-slideshow') });
     </script>

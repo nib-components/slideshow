@@ -2,10 +2,10 @@
   "name": "slideshow",
   "version": "0.1.5",
   "scripts": [
-    "index.js"
+    "index.js",
+    "lib/transitions-supported.js"
   ],
   "dependencies": {
-    "component/classes": "*",
     "component/event": "*",
     "anthonyshort/css-emitter": "0.1.0",
     "component/emitter": "*",
@@ -13,6 +13,7 @@
   },
   "development": {
     "component/assert": "*",
-    "nib-styles/slideshow": "*"
+    "nib-styles/slideshow": "*",
+    "nib-components/shims": "*"
   }
 }
