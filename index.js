@@ -11,7 +11,6 @@ var isTransitionSupported = require('./lib/transitions-supported');
  * @return {Element}
  */
 function getTemplate(el, name, text) {
-  console.log(el, name);
   var template = el.querySelector('[data-template="'+name+'"]').innerHTML.trim();
   var tmp = document.createElement('div');
   tmp.innerHTML = template;
@@ -39,7 +38,7 @@ function SlideShow(options) {
 
   this.speed          = this.options.speed || 0;
   this.enabled        = this.options.enabled || true;
-  this.useTransitions = this.options.useTransitions || isTransitionSupported;
+  this.useTransitions = typeof this.options.useTransitions !== 'undefined' ? this.options.useTransitions : isTransitionSupported;
 
   //create the navigation elements
   this._createNextButton();
@@ -169,10 +168,10 @@ SlideShow.prototype._createIndicators = function() {
 SlideShow.prototype._selectIndicator = function(index) {
   for (var i=0; i<this.slideElements.length; ++i) {
     if (i === index) {
-      this.indicatorElements[index].classList.add('current');
+      this.indicatorElements[index].classList.add('is-active');
       this.emit('indicator:active', this.indicatorElements[index], i);
     } else {
-      this.indicatorElements[i].classList.remove('current');
+      this.indicatorElements[i].classList.remove('is-active');
     }
   }
 };
@@ -230,9 +229,9 @@ SlideShow.prototype.show = function(index, isMovingForward) {
     //Position the next slide ready for the transition. Make sure transitions are disabled so the slide is moved immediately.
     nextSlide.classList.add('no-transitions');
     if (isMovingForward) {
-      nextSlide.classList.add('next');
+      nextSlide.classList.add('is-next');
     } else {
-      nextSlide.classList.add('previous');
+      nextSlide.classList.add('is-previous');
     }
 
     //Wait for the browser to render the position changes to the next slide.
@@ -240,16 +239,16 @@ SlideShow.prototype.show = function(index, isMovingForward) {
 
       //Start the current slide moving off the screen.
       if (isMovingForward) {
-        currentSlide.classList.add('previous');
+        currentSlide.classList.add('is-previous');
       } else {
-        currentSlide.classList.add('next');
+        currentSlide.classList.add('is-next');
       }
-      currentSlide.classList.remove('current');
+      currentSlide.classList.remove('is-current');
 
       //Re-enable transitions and start the next slide moving onto the screen.
-      nextSlide.classList.add('current');
-      nextSlide.classList.remove('next');
-      nextSlide.classList.remove('previous');
+      nextSlide.classList.add('is-current');
+      nextSlide.classList.remove('is-next');
+      nextSlide.classList.remove('is-previous');
       nextSlide.classList.remove('no-transitions');
 
     }.bind(this), 10);
@@ -258,8 +257,8 @@ SlideShow.prototype.show = function(index, isMovingForward) {
     transition(currentSlide).once(function(){
 
       //Reset the current slide position.
-      currentSlide.classList.remove('next');
-      currentSlide.classList.remove('previous');
+      currentSlide.classList.remove('is-next');
+      currentSlide.classList.remove('is-previous');
       //disable transitions cause they're not needed?
 
       //Set the current slide index.
@@ -276,8 +275,8 @@ SlideShow.prototype.show = function(index, isMovingForward) {
   } else {
 
     //Change the slide which is displayed.
-    nextSlide.classList.add('current');
-    currentSlide.classList.remove('current');
+    nextSlide.classList.add('is-current');
+    currentSlide.classList.remove('is-current');
 
     //Set the current slide index.
     this.currentIndex = index;
