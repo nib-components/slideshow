@@ -13,7 +13,7 @@
   },
   "development": {
     "component/assert": "*",
-    "nib-styles/slideshow": "*",
+    "nib-styles/slideshow": "ie8rewrite",
     "nib-components/shims": "*"
   }
 }

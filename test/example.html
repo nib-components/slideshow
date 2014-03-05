@@ -13,7 +13,7 @@
 
     </style>
 </head>
-<body>
+<body class="no-svg">
 
     <h1>Slideshow example</h1>
     <h4>Notes:</h4>
@@ -67,9 +67,17 @@
 
     <script src="../build/build.js"></script>
     <script>
-        require('shims'); //IE8
+
+        require('shims'); //shims like classList and trim() for IE8
+
+        //use modernizr insteda of this snippet
+        if (!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Shape", "1.0")) {
+            document.body.className = 'no-svg';
+        }
+
         var SlideShow = require('slideshow');
         new SlideShow({ el: document.querySelector('.js-slideshow') });
+
     </script>
 
 </body>
