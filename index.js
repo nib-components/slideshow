@@ -280,7 +280,7 @@ SlideShow.prototype.show = function(index, isMovingForward) {
       nextSlide.classList.remove('is-previous');
       nextSlide.classList.remove('no-transitions');
 
-    }.bind(this), 10);
+    }.bind(this), 100);
 
     //Remove the next/previous classes when the transition has finished.
     transition(currentSlide).once(function(){
