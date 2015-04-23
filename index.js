@@ -89,7 +89,7 @@ function SlideShow(options) {
       if(event.gesture.velocityX != 0) {
         if (event.gesture.direction == 'right') {
           this.previous();
-        } else {
+        } else if (event.gesture.direction == 'left') {
           this.next();
         }
       }
