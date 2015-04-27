@@ -9,7 +9,7 @@
     "component/event": "*",
     "anthonyshort/css-emitter": "0.1.0",
     "component/emitter": "*",
-    "EightMedia/hammer.js": "v1.0.5"
+    "hammerjs/hammer.js": "1.0.11"
   },
   "development": {
     "component/assert": "*",
