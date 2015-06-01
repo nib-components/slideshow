@@ -1,0 +1,22 @@
+{
+  "name": "@nib-components/slideshow",
+  "version": "0.1.6",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:nib-components/slideshow.git"
+  },
+  "dependencies": {
+    "component-classes": "*",
+    "component-event": "*",
+    "css-emitter-component": "0.1.0",
+    "component-emitter": "*",
+    "hammerjs": "1.0.11"
+  },
+  "browser": {
+    "classes": "component-classes",
+    "event": "component-event",
+    "css-emitter": "css-emitter-component",
+    "emitter": "component-emitter"
+  }
+}
